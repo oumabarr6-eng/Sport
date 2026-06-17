@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA — Performance Absolue</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --obsidian: #0A0A0B;
+            --obsidian-2: #111114;
+            --obsidian-3: #1C1C21;
+            --bone: #F2EFE9;
+            --bone-dim: #C8C4BC;
+            --indigo: #5B4FE9;
+            --indigo-bright: #7B70FF;
+            --amber: #E8A44A;
+            --slate: #8B8FA8;
+            --slate-dim: #4A4D5E;
+            --font-display: 'DM Sans', system-ui, sans-serif;
+            --font-body: 'DM Sans', system-ui, sans-serif;
+            --font-mono: 'DM Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--obsidian);
+            color: var(--bone);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── CANVAS BACKGROUND ── */
+        #canvas-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* ── NAVBAR ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.5rem;
+            height: 3.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(10,10,11,0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        .nav-logo {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: 0.08em;
+            color: var(--bone);
+            text-decoration: none;
+        }
+        .nav-logo span { color: var(--indigo-bright); }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+        .nav-links a {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            letter-spacing: 0.06em;
+            color: var(--slate);
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--bone); }
+
+        .nav-actions { display: flex; align-items: center; gap: 1rem; }
+
+        #lang-btn {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--bone);
+            background: var(--obsidian-3);
+            border: 1px solid var(--slate-dim);
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        #lang-btn:hover {
+            border-color: var(--indigo-bright);
+            background: rgba(91,79,233,0.15);
+        }
+
+        /* ── HERO ── */
+        #hero {
+            position: relative;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            padding: 0 2.5rem;
+            padding-top: 3.5rem;
+            z-index: 10;
+            gap: 2rem;
+        }
+
+        .hero-left { padding: 4rem 0 4rem; }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: 1.75rem;
+        }
+        .hero-eyebrow::before {
+            content: '';
+            display: block;
+            width: 1.5rem;
+            height: 1px;
+            background: var(--amber);
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: clamp(3rem, 6vw, 5.5rem);
+            line-height: 0.96;
+            letter-spacing: -0.03em;
+            color: var(--bone);
+            margin-bottom: 2rem;
+        }
+
+        .hero-title .word-accent {
+            color: transparent;
+            -webkit-text-stroke: 1.5px var(--indigo-bright);
+        }
+
+        .hero-title .word-push {
+            display: block;
+            transform: translateX(-0.05em);
+        }
+
+        .hero-body {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--slate);
+            max-width: 34ch;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+        }
+
+        .hero-ctas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .btn-primary {
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            color: var(--obsidian);
+            background: var(--bone);
+            border: none;
+            padding: 0.75rem 1.75rem;
+            border-radius: 999px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.15s;
+            display: inline-block;
+        }
+        .btn-primary:hover { background: #fff; transform: translateY(-1px); }
+
+        .btn-ghost {
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            color: var(--bone-dim);
+            background: transparent;
+            border: 1px solid var(--slate-dim);
+            padding: 0.75rem 1.75rem;
+            border-radius: 999px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+            display: inline-block;
+        }
+        .btn-ghost:hover { border-color: var(--bone); color: var(--bone); }
+
+        /* Stat panel on right */
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            align-items: flex-end;
+        }
+
+        .stat-card {
+            background: var(--obsidian-2);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 1rem;
+            padding: 1.5rem 2rem;
+            width: 100%;
+            max-width: 22rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--indigo), transparent);
+        }
+
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--slate);
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            color: var(--bone);
+            line-height: 1;
+        }
+        .stat-number span {
+            font-size: 1.25rem;
+            color: var(--indigo-bright);
+            font-weight: 400;
+        }
+
+        .stat-sub {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--slate);
+        }
+
+        .stat-bar {
+            margin-top: 1rem;
+            height: 3px;
+            background: var(--obsidian-3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--indigo), var(--indigo-bright));
+            animation: fillBar 2s ease forwards;
+        }
+        @keyframes fillBar { from { width: 0; } }
+
+        .stat-card.amber-accent::before {
+            background: linear-gradient(90deg, transparent, var(--amber), transparent);
+        }
+        .stat-card.amber-accent .stat-bar-fill {
+            background: linear-gradient(90deg, var(--amber), #F4C57A);
+        }
+
+        /* ── SECTION: PROGRAMS ── */
+        #programs {
+            position: relative;
+            z-index: 10;
+            padding: 7rem 2.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 3.5rem;
+            gap: 2rem;
+        }
+
+        .section-eyebrow {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--indigo-bright);
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: clamp(1.75rem, 3vw, 2.75rem);
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+            color: var(--bone);
+        }
+
+        .section-link {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--slate);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+        .section-link:hover { color: var(--bone); }
+        .section-link::after { content: ' →'; }
+
+        .programs-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .prog-card {
+            background: var(--obsidian-2);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 1.25rem;
+            padding: 2rem 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            transition: background 0.25s, transform 0.25s, border-color 0.25s;
+        }
+        .prog-card:hover {
+            background: var(--obsidian-3);
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.13);
+        }
+
+        .prog-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .prog-sys-id {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            letter-spacing: 0.1em;
+            color: var(--slate);
+            background: var(--obsidian-3);
+            border: 1px solid var(--slate-dim);
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.35rem;
+        }
+
+        .prog-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+        }
+        .prog-dot.indigo { background: var(--indigo-bright); box-shadow: 0 0 8px var(--indigo); }
+        .prog-dot.green  { background: #34C759; box-shadow: 0 0 8px rgba(52,199,89,0.7); }
+        .prog-dot.purple { background: #BF5AF2; box-shadow: 0 0 8px rgba(191,90,242,0.7); }
+
+        .prog-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.15rem;
+            letter-spacing: -0.02em;
+            color: var(--bone);
+            margin-bottom: 0.6rem;
+        }
+
+        .prog-desc {
+            font-size: 0.78rem;
+            line-height: 1.65;
+            color: var(--slate);
+            flex: 1;
+            margin-bottom: 1.5rem;
+        }
+
+        .prog-specs {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding-top: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .prog-spec-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .prog-spec-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            letter-spacing: 0.06em;
+            color: var(--slate);
+        }
+
+        .prog-spec-val {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            letter-spacing: 0.04em;
+            color: var(--bone-dim);
+            font-weight: 500;
+        }
+
+        .prog-cta {
+            width: 100%;
+            font-family: var(--font-body);
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            padding: 0.65rem 1rem;
+            border-radius: 0.6rem;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            text-align: center;
+        }
+        .prog-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+        .prog-cta.primary { background: var(--indigo); color: #fff; }
+        .prog-cta.dark    { background: var(--obsidian-3); color: var(--bone); border: 1px solid var(--slate-dim); }
+        .prog-cta.dark:hover { border-color: var(--indigo-bright); background: rgba(91,79,233,0.12); }
+
+        /* ── SECTION: MEDIA ── */
+        #media {
+            position: relative;
+            z-index: 10;
+            padding: 0 2.5rem 7rem;
+        }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: 1.25rem;
+        }
+
+        .media-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.25rem;
+            aspect-ratio: 16/10;
+            background: var(--obsidian-3);
+        }
+        .media-card.tall { aspect-ratio: 4/5; grid-row: span 2; }
+
+        .media-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(1) brightness(0.5);
+            transition: filter 0.6s ease, transform 0.6s ease;
+        }
+        .media-card:hover img {
+            filter: grayscale(0.3) brightness(0.65);
+            transform: scale(1.03);
+        }
+
+        .media-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(10,10,11,0.85) 0%, transparent 55%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1.75rem;
+        }
+
+        .media-tag {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--amber);
+            margin-bottom: 0.5rem;
+        }
+
+        .media-caption {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: -0.015em;
+            color: var(--bone);
+        }
+
+        /* ── SECTION: MANIFESTO ── */
+        #manifesto {
+            position: relative;
+            z-index: 10;
+            padding: 7rem 2.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            max-width: 64rem;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .manifesto-quote {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: clamp(1.9rem, 4vw, 3.5rem);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            color: var(--bone);
+            margin-bottom: 2rem;
+        }
+        .manifesto-quote em {
+            font-style: italic;
+            font-weight: 300;
+            color: var(--slate);
+        }
+
+        .manifesto-body {
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: var(--slate);
+            max-width: 48ch;
+            margin: 0 auto 3rem;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            position: relative;
+            z-index: 10;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.06em;
+            color: var(--bone);
+        }
+        .footer-logo span { color: var(--indigo-bright); }
+
+        .footer-copy {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--slate-dim);
+            letter-spacing: 0.06em;
+        }
+
+        /* ── SCROLL REVEAL ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(1.5rem);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.in-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            #hero {
+                grid-template-columns: 1fr;
+                padding: 1.5rem;
+                padding-top: 5rem;
+            }
+            .hero-right { align-items: stretch; }
+            .stat-card { max-width: none; }
+            .programs-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .media-grid { grid-template-columns: 1fr; }
+            .media-card.tall { aspect-ratio: 16/10; }
+            nav { padding: 0 1.25rem; }
+            .nav-links { display: none; }
+            footer { flex-direction: column; gap: 1rem; text-align: center; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <!-- NAV -->
+    <nav>
+        <a href="#" class="nav-logo" id="nav-brand">AURA<span>.</span></a>
+        <ul class="nav-links">
+            <li><a href="#programs" id="nav-programs">Programmes</a></li>
+            <li><a href="#media" id="nav-media">Studio</a></li>
+            <li><a href="#manifesto" id="nav-manifesto">Manifeste</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button id="lang-btn" aria-label="Switch language">EN</button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section id="hero">
+        <div class="hero-left">
+            <div class="hero-eyebrow" id="hero-eyebrow">L'ingénierie du corps humain</div>
+            <h1 class="hero-title">
+                <span id="hero-word-1" class="word-push">Repousse</span>
+                <span id="hero-word-2">tes </span><span id="hero-word-3" class="word-accent">limites</span><br>
+                <span id="hero-word-4">absolues.</span>
+            </h1>
+            <p class="hero-body" id="hero-body">
+                Des programmes de haute précision bâtis sur la science de l'effort — pour la performance, l'esthétique, et la durée.
+            </p>
+            <div class="hero-ctas">
+                <a href="#programs" class="btn-primary" id="btn-primary">Voir les programmes</a>
+                <a href="#manifesto" class="btn-ghost" id="btn-ghost">Notre philosophie</a>
+            </div>
+        </div>
+
+        <div class="hero-right">
+            <div class="stat-card reveal">
+                <div class="stat-label" id="stat1-label">Progression force</div>
+                <div class="stat-number">+34<span>%</span></div>
+                <div class="stat-sub" id="stat1-sub">Gain moyen sur 12 semaines</div>
+                <div class="stat-bar"><div class="stat-bar-fill" style="width:84%"></div></div>
+            </div>
+            <div class="stat-card amber-accent reveal" style="transition-delay:0.1s">
+                <div class="stat-label" id="stat2-label">Adhérence programme</div>
+                <div class="stat-number">91<span>%</span></div>
+                <div class="stat-sub" id="stat2-sub">Taux de complétion sur 16 semaines</div>
+                <div class="stat-bar"><div class="stat-bar-fill" style="width:91%"></div></div>
+            </div>
+            <div class="stat-card reveal" style="transition-delay:0.2s">
+                <div class="stat-label" id="stat3-label">Athlètes accompagnés</div>
+                <div class="stat-number">2 <span style="font-size:1rem">400+</span></div>
+                <div class="stat-sub" id="stat3-sub">En Europe et Amérique du Nord</div>
+                <div class="stat-bar"><div class="stat-bar-fill" style="width:67%"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROGRAMS -->
+    <section id="programs">
+        <div class="section-header reveal">
+            <div>
+                <div class="section-eyebrow" id="sec-prog-eyebrow">Sélection Système</div>
+                <h2 class="section-title" id="sec-prog-title">Choisis ton protocole<br>d'évolution.</h2>
+            </div>
+            <a href="#" class="section-link" id="sec-prog-link">Tous les programmes</a>
+        </div>
+
+        <div class="programs-grid reveal">
+
+            <!-- SYS.01 -->
+            <div class="prog-card">
+                <div class="prog-card-top">
+                    <span class="prog-sys-id">SYS.01</span>
+                    <span class="prog-dot indigo"></span>
+                </div>
+                <div class="prog-name" id="prog1-name">Force Absolue</div>
+                <div class="prog-desc" id="prog1-desc">Méthodologie périodisée centrée sur les gains de force maximale. Squats, soulevés et développés progressifs en ondulation hebdomadaire.</div>
+                <div class="prog-specs">
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-dur-1">Durée</span>
+                        <span class="prog-spec-val">16 Semaines</span>
+                    </div>
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-freq-1">Fréquence</span>
+                        <span class="prog-spec-val">4 jours / sem</span>
+                    </div>
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-lvl-1">Niveau</span>
+                        <span class="prog-spec-val" id="prog1-lvl">Intermédiaire</span>
+                    </div>
+                </div>
+                <button class="prog-cta primary" id="p1-btn">Activer le protocole</button>
+            </div>
+
+            <!-- SYS.02 -->
+            <div class="prog-card">
+                <div class="prog-card-top">
+                    <span class="prog-sys-id">SYS.02</span>
+                    <span class="prog-dot green"></span>
+                </div>
+                <div class="prog-name" id="prog2-name">Hypertrophie X</div>
+                <div class="prog-desc" id="prog2-desc">Volume élevé, tempo contrôlé, techniques d'intensification. Chaque série est calibrée pour un stimulus musculaire maximal.</div>
+                <div class="prog-specs">
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-dur-2">Durée</span>
+                        <span class="prog-spec-val">12 Semaines</span>
+                    </div>
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-freq-2">Fréquence</span>
+                        <span class="prog-spec-val">5 jours / sem</span>
+                    </div>
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-lvl-2">Niveau</span>
+                        <span class="prog-spec-val" id="prog2-lvl">Avancé</span>
+                    </div>
+                </div>
+                <button class="prog-cta dark" id="p2-btn">Activer le protocole</button>
+            </div>
+
+            <!-- SYS.03 -->
+            <div class="prog-card">
+                <div class="prog-card-top">
+                    <span class="prog-sys-id">SYS.03</span>
+                    <span class="prog-dot purple"></span>
+                </div>
+                <div class="prog-name" id="prog3-name">Définition Athlétique</div>
+                <div class="prog-desc" id="prog3-desc">Optimisation de la composition corporelle. Élimine les graisses tenaces tout en conservant l'intégralité de ton capital musculaire.</div>
+                <div class="prog-specs">
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-dur-3">Durée</span>
+                        <span class="prog-spec-val">8 Semaines</span>
+                    </div>
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-freq-3">Fréquence</span>
+                        <span class="prog-spec-val">3 à 4 jours / sem</span>
+                    </div>
+                    <div class="prog-spec-row">
+                        <span class="prog-spec-label" id="spec-lvl-3">Niveau</span>
+                        <span class="prog-spec-val" id="prog3-lvl">Tous niveaux</span>
+                    </div>
+                </div>
+                <button class="prog-cta primary" id="p3-btn">Activer le protocole</button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- MEDIA -->
+    <section id="media">
+        <div class="media-grid reveal">
+            <div class="media-card tall">
+                <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=900" alt="Athlète en entraînement">
+                <div class="media-overlay">
+                    <div class="media-tag" id="media1-tag">Intensité</div>
+                    <div class="media-caption" id="media1-cap">Force &amp; Hypertrophie</div>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                <div class="media-card">
+                    <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=700" alt="Salle de sport premium">
+                    <div class="media-overlay">
+                        <div class="media-tag" id="media2-tag">Environnement</div>
+                        <div class="media-caption" id="media2-cap">Équipement de pointe</div>
+                    </div>
+                </div>
+                <div class="media-card">
+                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=700" alt="Barbell training">
+                    <div class="media-overlay">
+                        <div class="media-tag" id="media3-tag">Méthode</div>
+                        <div class="media-caption" id="media3-cap">Science de l'effort</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MANIFESTO -->
+    <section id="manifesto">
+        <div class="reveal">
+            <p class="manifesto-quote" id="manifesto-quote">
+                La performance <em>ne s'improvise pas.</em><br>Elle se construit.
+            </p>
+            <p class="manifesto-body" id="manifesto-body">
+                AURA n'est pas un agrégateur de tendances fitness. C'est une discipline. Chaque protocole repose sur des décennies de recherche en physiologie de l'exercice, affiné par des milliers d'heures sous la barre.
+            </p>
+            <a href="#programs" class="btn-primary" id="manifesto-cta">Commencer maintenant</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-logo">AURA<span>.</span></div>
+        <div class="footer-copy" id="footer-copy">© 2026 AURA Performance — Tous droits réservés</div>
+    </footer>
+
+    <script>
+    // ── THREE.JS PARTICLE FIELD ──
+    (() => {
+        const canvas = document.getElementById('canvas-bg');
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.setSize(innerWidth, innerHeight);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+        camera.position.z = 5;
+
+        // Particle cloud
+        const count = 600;
+        const positions = new Float32Array(count * 3);
+        for (let i = 0; i < count * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 18;
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mat = new THREE.PointsMaterial({
+            size: 0.025,
+            color: 0x5B4FE9,
+            transparent: true,
+            opacity: 0.55
+        });
+        const particles = new THREE.Points(geo, mat);
+        scene.add(particles);
+
+        // Torus wireframe — subtler
+        const torusGeo = new THREE.TorusKnotGeometry(1.6, 0.22, 180, 24, 2, 5);
+        const torusMat = new THREE.MeshBasicMaterial({
+            color: 0x5B4FE9,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.07
+        });
+        const torus = new THREE.Mesh(torusGeo, torusMat);
+        scene.add(torus);
+
+        let mx = 0, my = 0;
+        addEventListener('mousemove', e => {
+            mx = (e.clientX / innerWidth - 0.5);
+            my = (e.clientY / innerHeight - 0.5);
+        });
+
+        const clock = new THREE.Clock();
+        (function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            particles.rotation.y = t * 0.03;
+            particles.rotation.x = t * 0.015;
+            torus.rotation.x += 0.0015;
+            torus.rotation.y += 0.0022;
+            torus.position.x += (mx * 0.6 - torus.position.x) * 0.04;
+            torus.position.y += (-my * 0.6 - torus.position.y) * 0.04;
+            renderer.render(scene, camera);
+        })();
+
+        addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+    })();
+
+    // ── SCROLL REVEAL ──
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => observer.observe(el));
+    // Trigger hero immediately
+    revealEls.forEach(el => { if (el.getBoundingClientRect().top < innerHeight) el.classList.add('in-view'); });
+
+    // ── MULTILINGUAL ──
+    const T = {
+        fr: {
+            navPrograms: 'Programmes', navMedia: 'Studio', navManifesto: 'Manifeste',
+            heroEyebrow: "L'ingénierie du corps humain",
+            heroW1: 'Repousse', heroW2: 'tes ', heroW3: 'limites', heroW4: 'absolues.',
+            heroBody: 'Des programmes de haute précision bâtis sur la science de l\'effort — pour la performance, l\'esthétique, et la durée.',
+            btnPrimary: 'Voir les programmes', btnGhost: 'Notre philosophie',
+            stat1Label: 'Progression force', stat1Sub: 'Gain moyen sur 12 semaines',
+            stat2Label: 'Adhérence programme', stat2Sub: 'Taux de complétion sur 16 semaines',
+            stat3Label: 'Athlètes accompagnés', stat3Sub: 'En Europe et Amérique du Nord',
+            secProgEyebrow: 'Sélection Système', secProgTitle: 'Choisis ton protocole\nd\'évolution.', secProgLink: 'Tous les programmes',
+            prog1Name: 'Force Absolue', prog1Desc: 'Méthodologie périodisée centrée sur les gains de force maximale. Squats, soulevés et développés progressifs en ondulation hebdomadaire.', prog1Lvl: 'Intermédiaire',
+            prog2Name: 'Hypertrophie X', prog2Desc: 'Volume élevé, tempo contrôlé, techniques d\'intensification. Chaque série est calibrée pour un stimulus musculaire maximal.', prog2Lvl: 'Avancé',
+            prog3Name: 'Définition Athlétique', prog3Desc: 'Optimisation de la composition corporelle. Élimine les graisses tenaces tout en conservant l\'intégralité de ton capital musculaire.', prog3Lvl: 'Tous niveaux',
+            specDur: 'Durée', specFreq: 'Fréquence', specLvl: 'Niveau',
+            btnActivate: 'Activer le protocole',
+            media1Tag: 'Intensité', media1Cap: 'Force & Hypertrophie',
+            media2Tag: 'Environnement', media2Cap: 'Équipement de pointe',
+            media3Tag: 'Méthode', media3Cap: 'Science de l\'effort',
+            manifestoQuote: 'La performance <em>ne s\'improvise pas.</em><br>Elle se construit.',
+            manifestoBody: 'AURA n\'est pas un agrégateur de tendances fitness. C\'est une discipline. Chaque protocole repose sur des décennies de recherche en physiologie de l\'exercice, affiné par des milliers d\'heures sous la barre.',
+            manifestoCta: 'Commencer maintenant',
+            footerCopy: '© 2026 AURA Performance — Tous droits réservés',
+        },
+        en: {
+            navPrograms: 'Programs', navMedia: 'Studio', navManifesto: 'Manifesto',
+            heroEyebrow: 'Human Body Engineering',
+            heroW1: 'Push', heroW2: 'your ', heroW3: 'limits', heroW4: 'absolutely.',
+            heroBody: 'High-precision training protocols built on exercise science — for performance, aesthetics, and longevity.',
+            btnPrimary: 'Explore Programs', btnGhost: 'Our philosophy',
+            stat1Label: 'Strength progression', stat1Sub: 'Average gain over 12 weeks',
+            stat2Label: 'Program adherence', stat2Sub: 'Completion rate over 16 weeks',
+            stat3Label: 'Athletes coached', stat3Sub: 'Across Europe and North America',
+            secProgEyebrow: 'System Selection', secProgTitle: 'Choose your evolution\nprotocol.', secProgLink: 'All programs',
+            prog1Name: 'Absolute Strength', prog1Desc: 'Periodized methodology targeting maximal strength gains. Squats, deadlifts, and progressive pressing via weekly undulation.', prog1Lvl: 'Intermediate',
+            prog2Name: 'Hypertrophy X', prog2Desc: 'High volume, controlled tempo, intensification techniques. Every set calibrated for maximum muscle stimulus.', prog2Lvl: 'Advanced',
+            prog3Name: 'Athletic Definition', prog3Desc: 'Body composition optimization. Shred stubborn fat while keeping your entire muscle mass fully intact.', prog3Lvl: 'All levels',
+            specDur: 'Duration', specFreq: 'Frequency', specLvl: 'Level',
+            btnActivate: 'Activate Protocol',
+            media1Tag: 'Intensity', media1Cap: 'Strength & Hypertrophy',
+            media2Tag: 'Environment', media2Cap: 'Elite Equipment',
+            media3Tag: 'Method', media3Cap: 'Science of Effort',
+            manifestoQuote: 'Performance <em>is not improvised.</em><br>It is built.',
+            manifestoBody: 'AURA is not a fitness trend aggregator. It is a discipline. Every protocol is grounded in decades of exercise physiology research, refined through thousands of hours under the bar.',
+            manifestoCta: 'Start now',
+            footerCopy: '© 2026 AURA Performance — All rights reserved',
+        }
+    };
+
+    let lang = 'fr';
+    const $ = id => document.getElementById(id);
+
+    function applyLang(l) {
+        const t = T[l];
+        $('nav-programs').textContent = t.navPrograms;
+        $('nav-media').textContent = t.navMedia;
+        $('nav-manifesto').textContent = t.navManifesto;
+        $('hero-eyebrow').textContent = t.heroEyebrow;
+        $('hero-word-1').textContent = t.heroW1;
+        $('hero-word-2').textContent = t.heroW2;
+        $('hero-word-3').textContent = t.heroW3;
+        $('hero-word-4').textContent = t.heroW4;
+        $('hero-body').textContent = t.heroBody;
+        $('btn-primary').textContent = t.btnPrimary;
+        $('btn-ghost').textContent = t.btnGhost;
+        $('stat1-label').textContent = t.stat1Label;
+        $('stat1-sub').textContent = t.stat1Sub;
+        $('stat2-label').textContent = t.stat2Label;
+        $('stat2-sub').textContent = t.stat2Sub;
+        $('stat3-label').textContent = t.stat3Label;
+        $('stat3-sub').textContent = t.stat3Sub;
+        $('sec-prog-eyebrow').textContent = t.secProgEyebrow;
+        $('sec-prog-title').innerHTML = t.secProgTitle.replace('\n','<br>');
+        $('sec-prog-link').textContent = t.secProgLink + ' →';
+        $('prog1-name').textContent = t.prog1Name;
+        $('prog1-desc').textContent = t.prog1Desc;
+        $('prog1-lvl').textContent = t.prog1Lvl;
+        $('prog2-name').textContent = t.prog2Name;
+        $('prog2-desc').textContent = t.prog2Desc;
+        $('prog2-lvl').textContent = t.prog2Lvl;
+        $('prog3-name').textContent = t.prog3Name;
+        $('prog3-desc').textContent = t.prog3Desc;
+        $('prog3-lvl').textContent = t.prog3Lvl;
+        // Spec labels
+        ['1','2','3'].forEach(n => {
+            $('spec-dur-'+n).textContent = t.specDur;
+            $('spec-freq-'+n).textContent = t.specFreq;
+            $('spec-lvl-'+n).textContent = t.specLvl;
+        });
+        // CTA buttons
+        ['p1-btn','p2-btn','p3-btn'].forEach(id => $( id).textContent = t.btnActivate);
+        $('media1-tag').textContent = t.media1Tag;
+        $('media1-cap').textContent = t.media1Cap;
+        $('media2-tag').textContent = t.media2Tag;
+        $('media2-cap').textContent = t.media2Cap;
+        $('media3-tag').textContent = t.media3Tag;
+        $('media3-cap').textContent = t.media3Cap;
+        $('manifesto-quote').innerHTML = t.manifestoQuote;
+        $('manifesto-body').textContent = t.manifestoBody;
+        $('manifesto-cta').textContent = t.manifestoCta;
+        $('footer-copy').textContent = t.footerCopy;
+        $('lang-btn').textContent = l === 'fr' ? 'EN' : 'FR';
+    }
+
+    $('lang-btn').addEventListener('click', () => {
+        lang = lang === 'fr' ? 'en' : 'fr';
+        applyLang(lang);
+    });
+    </script>
+</body>
+</html>
